@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 aerynOS Developers
+# SPDX-License-Identifier: MPL-2.0
+
+name        : cargo-update
+version     : "22.1.1"
+release     : 1
+homepage    : https://github.com/nabijaczleweli/cargo-update
+upstreams   :
+    - https://static.crates.io/crates/cargo-update/cargo-update-22.1.1.crate : d70145f46e4b0a9e20d88ecd433c15b3821a90820b117d1fd5a3a1a91c9eb2bb
+summary     : A cargo subcommand for checking and applying updates to installed executables
+description : |
+    cargo-update provides the `cargo install-update` subcommand, which checks and applies updates
+    to binaries previously installed with `cargo install`, including support for git and
+    alternative registry sources.
+license     : MIT
+networking  : true
+builddeps   :
+    # boulder keys its automatic bsdtar-static dependency off the source file
+    # extension and does not know crates.io's ".crate", so ask for it explicitly.
+    - binary(bsdtar-static)
+    - pkgconfig(libcurl)
+    - pkgconfig(libgit2)
+    - pkgconfig(libssh2)
+    - pkgconfig(openssl)
+rundeps     :
+    - binary(cargo)
+setup       : |
+    # The openssl-sys version pinned by the crate's Cargo.lock predates the
+    # OpenSSL 4 in our repository and refuses to build against it.
+    %patch %(pkgdir)/ftbfs-openssl-4.patch
+
+    %cargo_fetch
+build       : |
+    %cargo_build
+install     : |
+    %cargo_install cargo-install-update cargo-install-update-config
+
+    %install_file LICENSE -t %(installroot)%(datadir)/licenses/%(name)/
+check       : |
+    %cargo_test
